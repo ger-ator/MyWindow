@@ -1,3 +1,5 @@
+#define SN "MyWindow"
+#define SV "2.2"
 // Enable debug prints to serial monitor
 //#define MY_DEBUG
 
@@ -55,7 +57,7 @@ void setup()
 
 void presentation()
 {
-  sendSketchInfo("SBM Window", "2.2");
+  sendSketchInfo(SN, SV);
   present(1, S_DOOR);
   present(201, S_MULTIMETER);
 }
