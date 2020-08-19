@@ -1,5 +1,5 @@
 #define SN "MyWindow"
-#define SV "2.2"
+#define SV "2.3"
 // Enable debug prints to serial monitor
 //#define MY_DEBUG
 
@@ -30,7 +30,7 @@ typedef enum
 {
   INIT,
   ARMED,
-  WAITING_ECHO,
+  WAITING_ACK,
   RETRY,
   GOTO_SLEEP,
   FOTA_ONGOING,
@@ -40,11 +40,11 @@ States m_state;
 MyMessage msg(1, V_TRIPPED);
 MyMessage msg_batt(201, V_VOLTAGE);
 
-#define REQUEST_ECHO true
-#define ECHO_TIMEOUT 2000 //ms
+#define REQUEST_ACK true
+#define ACK_TIMEOUT 2000 //ms
 #define BATT_SKIP_COUNT 4
 
-unsigned long timing_echo_timeout;
+unsigned long timing_ack_timeout;
 unsigned long trip_counter;
 
 void setup()
@@ -52,7 +52,7 @@ void setup()
   pinMode(3, INPUT);
   m_state = INIT;
   trip_counter = 0;
-  timing_echo_timeout = 0;
+  timing_ack_timeout = 0;
 }
 
 void presentation()
@@ -86,14 +86,14 @@ void loop()
         }
         // Short delay to allow buttons to properly settle
         sleep(1500);
-        send(msg.set(digitalRead(3) == HIGH), REQUEST_ECHO);
+        send(msg.set(digitalRead(3) == HIGH), REQUEST_ACK);
         trip_counter++;
-        timing_echo_timeout = millis();
-        m_state = WAITING_ECHO;
+        timing_ack_timeout = millis();
+        m_state = WAITING_ACK;
         break;
       }
-    case WAITING_ECHO: {
-        if (millis() - timing_echo_timeout >= ECHO_TIMEOUT) {
+    case WAITING_ACK: {
+        if (millis() - timing_ack_timeout >= ACK_TIMEOUT) {
           DEBUG_OUTPUT(PSTR("SKETCH DEBUGGING: Timeout. Retrying in 60s.\n"));
           m_state = RETRY;
           sleep(60000);
@@ -102,9 +102,9 @@ void loop()
       }
     case RETRY: {
         DEBUG_OUTPUT(PSTR("SKETCH DEBUGGING: Send retry.\n"));
-        send(msg.set(digitalRead(3) == HIGH), REQUEST_ECHO);
-        timing_echo_timeout = millis();
-        m_state = WAITING_ECHO;
+        send(msg.set(digitalRead(3) == HIGH), REQUEST_ACK);
+        timing_ack_timeout = millis();
+        m_state = WAITING_ACK;
         break;
       }
     case GOTO_SLEEP: {
@@ -126,7 +126,7 @@ void loop()
 void receive(const MyMessage &message)
 {
   if (message.type == V_TRIPPED) {
-    if (message.isEcho()) {
+    if (message.isAck()) {
       DEBUG_OUTPUT(PSTR("SKETCH DEBUGGING: Echo received.\n"));
       m_state = GOTO_SLEEP;
     }
