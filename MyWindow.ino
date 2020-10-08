@@ -1,5 +1,5 @@
 #define SN "MyWindow"
-#define SV "2.3"
+#define SV "2.4"
 // Enable debug prints to serial monitor
 //#define MY_DEBUG
 
@@ -7,6 +7,8 @@
 #define MY_RFM69_FREQUENCY RFM69_433MHZ
 #define MY_IS_RFM69HW
 #define MY_RFM69_NEW_DRIVER
+#define MY_RFM69_ATC_MODE_DISABLED
+#define MY_RFM69_TX_POWER_DBM (20)
 
 // Message signing settings
 #define MY_SIGNING_ATSHA204
