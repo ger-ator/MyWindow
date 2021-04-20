@@ -1,5 +1,5 @@
 #define SN "MyWindow"
-#define SV "2.4"
+#define SV "2.5"
 // Enable debug prints to serial monitor
 //#define MY_DEBUG
 
@@ -7,16 +7,17 @@
 #define MY_RFM69_FREQUENCY RFM69_433MHZ
 #define MY_IS_RFM69HW
 #define MY_RFM69_NEW_DRIVER
-#define MY_RFM69_ATC_MODE_DISABLED
-#define MY_RFM69_TX_POWER_DBM (20)
+#define MY_RFM69_MAX_POWER_LEVEL_DBM (20)
+#define MY_RFM69_ATC_TARGET_RSSI_DBM (-75)
+#define MY_SIGNAL_REPORT_ENABLED
 
 // Message signing settings
 #define MY_SIGNING_ATSHA204
 #define MY_SIGNING_REQUEST_SIGNATURES
 
 //Enable OTA feature
-#define MY_OTA_FIRMWARE_FEATURE
-#define MY_SMART_SLEEP_WAIT_DURATION_MS 1000
+//#define MY_OTA_FIRMWARE_FEATURE
+//#define MY_SMART_SLEEP_WAIT_DURATION_MS 1000
 
 // Optimizations when running on battery.
 #define MY_TRANSPORT_UPLINK_CHECK_DISABLED
@@ -27,6 +28,8 @@
 #define MY_SPLASH_SCREEN_DISABLED
 
 #include <MySensors.h>
+
+//#define SENSEBENDER_BOARD
 
 typedef enum
 {
@@ -52,6 +55,11 @@ unsigned long trip_counter;
 void setup()
 {
   pinMode(3, INPUT);
+  #ifdef SENSEBENDER_BOARD
+  //analogReference(DEFAULT);
+  #else
+  analogReference(INTERNAL);
+  #endif
   m_state = INIT;
   trip_counter = 0;
   timing_ack_timeout = 0;
@@ -66,8 +74,9 @@ void presentation()
 
 void loop()
 {
+#ifdef MY_OTA_FIRMWARE_FEATURE
   if (isFirmwareUpdateOngoing()) m_state = FOTA_ONGOING;
-
+#endif
   switch (m_state) {    
     case INIT: {
         DEBUG_OUTPUT(PSTR("SKETCH DEBUGGING: Sending initial status.\n"));
@@ -138,6 +147,8 @@ void receive(const MyMessage &message)
 /*
    Taken from Sensebender Micro sketch
 */
+
+#ifdef SENSEBENDER_BOARD
 long readVcc() {
   // Read 1.1V reference against AVcc
   // set the reference to Vcc and the measurement to the internal 1.1V reference
@@ -163,3 +174,12 @@ long readVcc() {
   result = 1125300L / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
   return result; // Vcc in millivolts
 }
+#else
+long readVcc(){
+
+  // Get the battery Voltage
+  long result = analogRead(A6);
+  result = (long)(result * 3.3);
+  return result;
+}
+#endif
